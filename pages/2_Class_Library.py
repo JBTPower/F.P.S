@@ -13,26 +13,60 @@ def render(storage, class_id: str):
 
     class_item = storage.get_class(class_id)
     modules = storage.get_modules_for_class(class_id)
+    selected_module_key = f"selected_material_module_{class_id}"
+    module_name_key = f"upload_module_name_{class_id}"
+
+    if selected_module_key not in st.session_state:
+        st.session_state[selected_module_key] = modules[0] if modules else ""
+    if module_name_key not in st.session_state:
+        st.session_state[module_name_key] = st.session_state[selected_module_key]
+
     selected_module = st.selectbox(
         "Choose a module folder",
         modules,
-        index=0,
-        key="selected_material_module",
+        index=modules.index(st.session_state[selected_module_key]) if st.session_state[selected_module_key] in modules else 0,
+        key=selected_module_key,
     )
 
+    if selected_module != st.session_state[selected_module_key]:
+        st.session_state[selected_module_key] = selected_module
+        st.session_state[module_name_key] = selected_module
+
+    module_name = st.text_input(
+        "Module folder name",
+        value=st.session_state[module_name_key],
+        key=module_name_key,
+    )
+
+    if st.button("Create / select module folder", key=f"create_module_{class_id}"):
+        if not module_name.strip():
+            st.error("Please enter a module folder name.")
+        else:
+            success, result = storage.add_module(class_id, module_name.strip())
+            if success:
+                st.success(f"Module '{module_name.strip()}' is ready.")
+                st.session_state[selected_module_key] = module_name.strip()
+                st.experimental_rerun()
+            else:
+                st.error(result)
+
+    st.divider()
+
+    if not module_name.strip():
+        st.warning("Enter a module name to upload or view files.")
+        return
+
+    if module_name not in modules:
+        modules.append(module_name)
+
     with st.expander("Upload document to this module", expanded=True):
-        module_name = st.text_input(
-            "Module folder name",
-            value=selected_module,
-            key="upload_module_name",
-        )
         uploaded_file = st.file_uploader(
             "Choose a document",
             type=["pdf", "ppt", "pptx", "docx", "txt", "md"],
-            key="class_material_upload",
+            key=f"class_material_upload_{class_id}",
         )
 
-        if uploaded_file is not None and st.button("Save uploaded document", key="save_uploaded_material"):
+        if uploaded_file is not None and st.button("Save uploaded document", key=f"save_uploaded_material_{class_id}"):
             content = uploaded_file.read()
             success, result = storage.upload_file(
                 class_id,
@@ -48,8 +82,8 @@ def render(storage, class_id: str):
                 st.error(result)
 
     st.divider()
-    st.subheader(f"Files in {selected_module}")
-    files = storage.get_files_for_class(class_id, module=selected_module)
+    st.subheader(f"Files in {module_name}")
+    files = storage.get_files_for_class(class_id, module=module_name)
     if not files:
         st.info("No documents uploaded to this module yet.")
         return

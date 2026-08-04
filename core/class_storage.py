@@ -41,6 +41,31 @@ def _utc_now_iso() -> str:
     return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 
+def _ordered_module_list(class_item: Optional[dict]) -> List[str]:
+    seen = set()
+    modules = []
+    for name in DEFAULT_MODULES:
+        if name not in seen:
+            seen.add(name)
+            modules.append(name)
+
+    if not class_item:
+        return modules
+
+    for name in class_item.get("modules", []):
+        if name and name not in seen:
+            seen.add(name)
+            modules.append(name)
+
+    for file_item in class_item.get("files", []):
+        module_name = file_item.get("module", "Module 1")
+        if module_name and module_name not in seen:
+            seen.add(module_name)
+            modules.append(module_name)
+
+    return modules
+
+
 class ClassStorage:
     def __init__(self, data_dir: Optional[Path] = None):
         data_dir = data_dir or Path(__file__).resolve().parents[1] / "data"
@@ -76,6 +101,7 @@ class ClassStorage:
             "name": name,
             "created_at": _utc_now_iso(),
             "rotation_history": [],
+            "modules": [],
         }
         self._data["classes"].append(new_class)
         self._save()
@@ -88,6 +114,23 @@ class ClassStorage:
         class_item["name"] = name.strip() or class_item["name"]
         self._save()
         return True, "Class updated successfully."
+
+    def add_module(self, class_id: str, module_name: str) -> Tuple[bool, Union[str, Dict]]:
+        class_item = self.get_class(class_id)
+        if not class_item:
+            return False, "Class not found."
+
+        module_name = module_name.strip()
+        if not module_name:
+            return False, "Module name cannot be empty."
+
+        modules = class_item.setdefault("modules", [])
+        if module_name in modules:
+            return True, module_name
+
+        modules.append(module_name)
+        self._save()
+        return True, module_name
 
     def delete_class(self, class_id: str) -> Tuple[bool, str]:
         before = len(self._data["classes"])
@@ -130,11 +173,22 @@ class ClassStorage:
         return rotations[-1] if rotations else None
 
     def get_modules_for_class(self, class_id: str) -> List[str]:
-        modules = set(DEFAULT_MODULES)
+        class_item = self.get_class(class_id)
+        if not class_item:
+            return list(DEFAULT_MODULES)
+
+        module_names = list(DEFAULT_MODULES)
+        for module_name in class_item.get("modules", []):
+            if module_name and module_name not in module_names:
+                module_names.append(module_name)
+
         for file_item in self._data["files"]:
             if file_item.get("class_id") == class_id:
-                modules.add(file_item.get("module", "Module 1"))
-        return sorted(modules)
+                module_name = file_item.get("module", "Module 1")
+                if module_name and module_name not in module_names:
+                    module_names.append(module_name)
+
+        return module_names
 
     def get_files_for_class(self, class_id: str, module: Optional[str] = None) -> List[Dict]:
         files = [item for item in self._data["files"] if item.get("class_id") == class_id]
@@ -167,6 +221,10 @@ class ClassStorage:
             "created_at": _utc_now_iso(),
         }
         self._data["files"].append(file_item)
+
+        if module_name not in class_item.setdefault("modules", []):
+            class_item["modules"].append(module_name)
+
         self._save()
         return True, file_item
 
