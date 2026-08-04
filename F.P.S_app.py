@@ -20,12 +20,17 @@ fps_dashboard/
 └── data/                   <- created automatically at runtime
 """
 
+from pathlib import Path
+
 import streamlit as st
+
+app_dir = Path(__file__).resolve().parent
+pages_dir = app_dir / "pages"
 
 st.set_page_config(page_title="F.P.S. — Felipe's Problem Solver", page_icon="🧩", layout="wide")
 
-team_builder = st.Page("pages/1_Team_Builder.py", title="Team & Rotation Builder", icon="👥")
-class_library = st.Page("pages/2_Class_Library.py", title="Class Material Library", icon="📁")
+team_builder = st.Page(pages_dir / "1_Team_Builder.py", title="Team & Rotation Builder", icon="👥")
+class_library = st.Page(pages_dir / "2_Class_Library.py", title="Class Material Library", icon="📁")
 
 pg = st.navigation([team_builder, class_library])
 
