@@ -4,12 +4,21 @@ Includes:
 - Crash-free Class Management
 - True Folder/Subfolder Module Library (with Add/Remove Modules)
 - Felipe's Authoritative Capstone + Non-Repeating Pair/Trio Rotation Engine
+- AI Assistant (Summarizer, Quiz, Chat, Material Review)
 """
 
 import streamlit as st
 import pandas as pd
 import random
 from pathlib import Path
+from core.ai_helper import (
+    extract_text_from_bytes,
+    summarize_document,
+    generate_quiz,
+    chat_with_material,
+    review_material,
+    generate_team_icebreaker,
+)
 
 # --- PAGE CONFIG & MODERN CSS ---
 st.set_page_config(
@@ -142,7 +151,7 @@ with main_col:
     else:
         st.markdown(f"### 📍 Workspace: **{active_class['name']}**")
         
-        tabs = st.tabs(["👥 Team Rotation Builder (Felipe's Logic)", "📁 Class Material Library (Subfolders)"])
+        tabs = st.tabs(["👥 Team Rotation Builder (Felipe's Logic)", "📁 Class Material Library (Subfolders)", "🤖 AI Assistant"])
 
         # ==========================================
         # TAB 1: FELIPE'S TEAM & ROTATION BUILDER
@@ -278,12 +287,14 @@ with main_col:
                         label_visibility="collapsed"
                     )
                     if uploaded:
-                        # Add file to specific subfolder memory
+                        # Add file to specific subfolder memory (including raw bytes for AI)
                         existing_names = [f["name"] for f in active_class["files"][mod]]
                         if uploaded.name not in existing_names:
+                            file_bytes = uploaded.getvalue()
                             active_class["files"][mod].append({
                                 "name": uploaded.name,
-                                "size": f"{round(uploaded.size / 1024, 1)} KB"
+                                "size": f"{round(uploaded.size / 1024, 1)} KB",
+                                "bytes": file_bytes
                             })
                             st.rerun()
 
@@ -309,3 +320,111 @@ with main_col:
                                     active_class["files"][mod].pop(idx)
                                     st.rerun()
                     st.markdown("<hr style='margin: 1rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+
+        # ==========================================
+        # TAB 3: AI ASSISTANT
+        # ==========================================
+        with tabs[2]:
+            st.markdown("#### 🤖 AI-Powered Course Assistant")
+            st.write("Use AI to analyze, summarize, quiz, and chat about your uploaded course materials.")
+
+            # --- Collect all files across all modules for this class ---
+            all_files = []
+            for mod_name in active_class["modules"]:
+                for f in active_class["files"].get(mod_name, []):
+                    if f.get("bytes"):
+                        all_files.append({"module": mod_name, "name": f["name"], "bytes": f["bytes"]})
+
+            if not all_files:
+                st.info("📂 No files with content found. Upload documents in the **Class Material Library** tab first.")
+            else:
+                # File selector
+                file_labels = [f"{f['module']} / {f['name']}" for f in all_files]
+                selected_file_label = st.selectbox("Select a document to work with", file_labels, key="ai_file_select")
+                selected_file = all_files[file_labels.index(selected_file_label)]
+
+                # Extract text once
+                extracted_text_key = f"extracted_{selected_file['module']}_{selected_file['name']}"
+                if extracted_text_key not in st.session_state:
+                    st.session_state[extracted_text_key] = extract_text_from_bytes(
+                        selected_file["bytes"], selected_file["name"]
+                    )
+                doc_text = st.session_state[extracted_text_key]
+
+                # Show extraction preview
+                with st.expander("📄 Extracted Text Preview", expanded=False):
+                    st.text(doc_text[:2000] + ("\n\n... (truncated)" if len(doc_text) > 2000 else ""))
+
+                # AI Sub-tabs
+                ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "💬 Study Chat", "📋 Material Reviewer"])
+
+                # ----- SUMMARIZER -----
+                with ai_tabs[0]:
+                    st.markdown("##### Summarize this document")
+                    st.caption("Get a TL;DR, key concepts, and important details.")
+                    if st.button("✨ Generate Summary", key="btn_summarize", type="primary"):
+                        with st.spinner("AI is reading and summarizing..."):
+                            summary = summarize_document(doc_text)
+                            st.session_state["ai_summary"] = summary
+                    if "ai_summary" in st.session_state:
+                        st.markdown(st.session_state["ai_summary"])
+
+                # ----- QUIZ GENERATOR -----
+                with ai_tabs[1]:
+                    st.markdown("##### Generate practice questions")
+                    st.caption("Create a quiz from the document content.")
+                    num_q = st.slider("Number of questions", min_value=3, max_value=10, value=5, key="quiz_num_q")
+                    if st.button("🧠 Generate Quiz", key="btn_quiz", type="primary"):
+                        with st.spinner("AI is generating questions..."):
+                            quiz = generate_quiz(doc_text, num_q)
+                            st.session_state["ai_quiz"] = quiz
+                    if "ai_quiz" in st.session_state:
+                        st.markdown(st.session_state["ai_quiz"])
+
+                # ----- STUDY CHAT -----
+                with ai_tabs[2]:
+                    st.markdown("##### Chat with this document")
+                    st.caption("Ask questions and the AI answers based on the material.")
+
+                    # Initialize chat history
+                    if "ai_chat_history" not in st.session_state:
+                        st.session_state["ai_chat_history"] = []
+
+                    # Display chat history
+                    for msg in st.session_state["ai_chat_history"]:
+                        with st.chat_message(msg["role"]):
+                            st.markdown(msg["content"])
+
+                    # Chat input
+                    user_question = st.chat_input("Ask a question about the document...", key="ai_chat_input")
+                    if user_question:
+                        # Add user message
+                        st.session_state["ai_chat_history"].append({"role": "user", "content": user_question})
+                        with st.chat_message("user"):
+                            st.markdown(user_question)
+
+                        # Get AI response
+                        with st.chat_message("assistant"):
+                            with st.spinner("Thinking..."):
+                                ai_response = chat_with_material(
+                                    doc_text, user_question, st.session_state["ai_chat_history"][:-1]
+                                )
+                                st.markdown(ai_response)
+                        st.session_state["ai_chat_history"].append({"role": "assistant", "content": ai_response})
+
+                    # Clear chat button
+                    if st.session_state["ai_chat_history"]:
+                        if st.button("🗑️ Clear Chat", key="btn_clear_chat"):
+                            st.session_state["ai_chat_history"] = []
+                            st.rerun()
+
+                # ----- MATERIAL REVIEWER -----
+                with ai_tabs[3]:
+                    st.markdown("##### Get AI feedback on this material")
+                    st.caption("Professor-facing review: clarity, completeness, difficulty, and suggestions.")
+                    if st.button("📋 Review Material", key="btn_review", type="primary"):
+                        with st.spinner("AI is reviewing the material..."):
+                            review = review_material(doc_text)
+                            st.session_state["ai_review"] = review
+                    if "ai_review" in st.session_state:
+                        st.markdown(st.session_state["ai_review"])
