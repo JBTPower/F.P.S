@@ -92,11 +92,25 @@ page_modules = {
 }
 
 classes = storage.get_classes()
-selected_class_id = st.session_state.get("selected_class_id")
-selected_class = storage.get_class(selected_class_id) if selected_class_id else None
-if not selected_class and classes:
-    selected_class = classes[0]
-    st.session_state["selected_class_id"] = selected_class["id"]
+
+# Build a stable selectbox that uses class IDs as the option values and shows
+# class names as labels. This avoids mismatches between stored IDs and names
+# and prevents the UI from ending up with a missing `selected_class`.
+class_ids = [c["id"] for c in classes]
+def _format_class_name(class_id: str) -> str:
+    for c in classes:
+        if c["id"] == class_id:
+            return c.get("name", class_id)
+    return class_id
+
+# Ensure session state has a valid selected id
+current_id = st.session_state.get("selected_class_id")
+if current_id not in class_ids:
+    current_id = class_ids[0] if class_ids else None
+    if current_id:
+        st.session_state["selected_class_id"] = current_id
+
+selected_class = storage.get_class(current_id) if current_id else None
 
 nav_col, main_col = st.columns([1, 5], gap="large")
 
@@ -104,19 +118,15 @@ with nav_col:
     st.markdown("### Classes")
 
     if classes:
-        class_names = [item["name"] for item in classes]
-        selected_name = st.selectbox(
+        selected_id = st.selectbox(
             "Choose a class",
-            class_names,
-            index=class_names.index(selected_class["name"]),
-            key="selected_class_name",
+            class_ids,
+            index=class_ids.index(current_id) if current_id in class_ids else 0,
+            format_func=_format_class_name,
+            key="selected_class_id",
         )
-        if selected_name != selected_class["name"]:
-            new_selected = next(
-                item for item in classes if item["name"] == selected_name
-            )
-            st.session_state["selected_class_id"] = new_selected["id"]
-            _safe_rerun()
+        # `selected_class` is derived from `st.session_state['selected_class_id']`
+        selected_class = storage.get_class(selected_id)
     else:
         st.info("No classes available. Add a new class below.")
 
