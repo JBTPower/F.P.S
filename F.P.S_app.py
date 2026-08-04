@@ -23,6 +23,7 @@ st.markdown(
     """
     <style>
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+    [data-testid="stSidebar"] { display: none; }
     .stApp { background-color: #F8F9FA; }
     [data-testid="column"]:nth-of-type(1) {
         background-color: #FFFFFF; padding: 1.5rem; border-radius: 12px;
