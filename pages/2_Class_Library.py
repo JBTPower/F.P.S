@@ -46,7 +46,15 @@ def render(storage, class_id: str):
             if success:
                 st.success(f"Module '{module_name.strip()}' is ready.")
                 st.session_state[selected_module_key] = module_name.strip()
-                st.experimental_rerun()
+                try:
+                    rerun = getattr(st, "experimental_rerun", None)
+                    if callable(rerun):
+                        rerun()
+                except Exception:
+                    try:
+                        st.stop()
+                    except Exception:
+                        pass
             else:
                 st.error(result)
 
@@ -77,7 +85,15 @@ def render(storage, class_id: str):
             )
             if success:
                 st.success(f"Saved {uploaded_file.name} in {module_name}.")
-                st.experimental_rerun()
+                try:
+                    rerun = getattr(st, "experimental_rerun", None)
+                    if callable(rerun):
+                        rerun()
+                except Exception:
+                    try:
+                        st.stop()
+                    except Exception:
+                        pass
             else:
                 st.error(result)
 
@@ -117,7 +133,15 @@ def render(storage, class_id: str):
                         success, message = storage.delete_file(file_item["id"])
                         if success:
                             st.success(message)
-                            st.experimental_rerun()
+                            try:
+                                rerun = getattr(st, "experimental_rerun", None)
+                                if callable(rerun):
+                                    rerun()
+                            except Exception:
+                                try:
+                                    st.stop()
+                                except Exception:
+                                    pass
                         else:
                             st.error(message)
                     else:

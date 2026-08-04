@@ -128,7 +128,15 @@ def _render_team_builder(storage, class_id: str):
         )
         if success:
             st.success("Rotation saved for the class period.")
-            st.experimental_rerun()
+            try:
+                rerun = getattr(st, "experimental_rerun", None)
+                if callable(rerun):
+                    rerun()
+            except Exception:
+                try:
+                    st.stop()
+                except Exception:
+                    pass
         else:
             st.error(result)
 

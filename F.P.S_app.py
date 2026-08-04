@@ -29,6 +29,29 @@ from core.class_storage import ClassStorage
 
 DEFAULT_CLASS_NAME = "Summerschool Class Prague 2nd-14th August"
 
+
+def _safe_rerun():
+    """Safely call Streamlit's experimental rerun if available.
+
+    Some Streamlit environments (or versions) may not expose
+    `st.experimental_rerun` or it may raise. We try to call it and fall
+    back to `st.stop()` if necessary so the app doesn't raise an
+    AttributeError to the user.
+    """
+    try:
+        rerun = getattr(st, "experimental_rerun", None)
+        if callable(rerun):
+            rerun()
+            return
+    except Exception:
+        pass
+
+    try:
+        st.stop()
+    except Exception:
+        # If even st.stop() fails, silently ignore to avoid crashing the app.
+        pass
+
 app_dir = Path(__file__).resolve().parent
 pages_dir = app_dir / "pages"
 
@@ -93,7 +116,7 @@ with nav_col:
                 item for item in classes if item["name"] == selected_name
             )
             st.session_state["selected_class_id"] = new_selected["id"]
-            st.experimental_rerun()
+            _safe_rerun()
     else:
         st.info("No classes available. Add a new class below.")
 
@@ -112,7 +135,7 @@ with nav_col:
             if success:
                 st.success(f"Created class '{result['name']}'.")
                 st.session_state["selected_class_id"] = result["id"]
-                st.experimental_rerun()
+                _safe_rerun()
             else:
                 st.error(result)
 
@@ -132,7 +155,7 @@ with nav_col:
                 if success:
                     st.success(message)
                     st.session_state["confirm_delete_class"] = False
-                    st.experimental_rerun()
+                    _safe_rerun()
                 else:
                     st.error(message)
             else:
