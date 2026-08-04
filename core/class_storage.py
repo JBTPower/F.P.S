@@ -12,7 +12,13 @@ DEFAULT_CATEGORIES = {
 
 
 def _default_data() -> dict:
-    return {"classes": []}
+    return {"classes": [], "files": []}
+
+
+def _make_class_folder(data_dir: Path, class_id: str) -> Path:
+    folder = data_dir / "uploads" / class_id
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
 
 
 class ClassStorage:
@@ -35,6 +41,12 @@ class ClassStorage:
             for item in self._data["classes"]
             if item.get("category") == category_key
         ]
+
+    def get_class(self, class_id: str) -> Optional[Dict]:
+        for item in self._data["classes"]:
+            if item.get("id") == class_id:
+                return item
+        return None
 
     def get_all_classes(self) -> List[Dict]:
         return list(self._data["classes"])
@@ -75,8 +87,62 @@ class ClassStorage:
         self._data["classes"] = [
             item for item in self._data["classes"] if item.get("id") != class_id
         ]
+        self._data["files"] = [
+            file_item for file_item in self._data["files"] if file_item.get("class_id") != class_id
+        ]
         if len(self._data["classes"]) == before:
             return False, "Class not found."
 
         self._save()
         return True, "Class deleted successfully."
+
+    def get_files_for_class(self, class_id: str) -> List[Dict]:
+        return [
+            file_item
+            for file_item in self._data["files"]
+            if file_item.get("class_id") == class_id
+        ]
+
+    def upload_file(self, class_id: str, file_name: str, content: bytes, mime_type: str) -> Tuple[bool, Union[str, Dict]]:
+        class_item = self.get_class(class_id)
+        if not class_item:
+            return False, "Class folder not found."
+
+        safe_name = Path(file_name).name
+        upload_folder = _make_class_folder(self.data_dir, class_id)
+        target_path = upload_folder / safe_name
+        if target_path.exists():
+            return False, "A file with that name already exists in this class folder."
+
+        target_path.write_bytes(content)
+
+        file_item = {
+            "id": uuid4().hex,
+            "class_id": class_id,
+            "name": safe_name,
+            "path": str(target_path.relative_to(self.data_dir)),
+            "mime_type": mime_type,
+        }
+        self._data["files"].append(file_item)
+        self._save()
+        return True, file_item
+
+    def delete_file(self, file_id: str) -> tuple[bool, str]:
+        file_item = None
+        for item in self._data["files"]:
+            if item.get("id") == file_id:
+                file_item = item
+                break
+
+        if not file_item:
+            return False, "File not found."
+
+        file_path = self.data_dir / file_item.get("path", "")
+        if file_path.exists():
+            file_path.unlink()
+
+        self._data["files"] = [
+            item for item in self._data["files"] if item.get("id") != file_id
+        ]
+        self._save()
+        return True, "File deleted successfully."

@@ -98,7 +98,10 @@ with nav_col:
 with main_col:
     st.title("F.P.S")
     st.write(
-        "Manage Felipe's classes in the two folders below. Add or delete classes with confirmation so the workspace stays clean."
+        "Felipe's Problem Solver dashboard brings together team planning and class material management in one place."
+    )
+    st.write(
+        "Choose one of the folders below to create class groups, upload documents, and build the class library over time."
     )
 
     counts = {
