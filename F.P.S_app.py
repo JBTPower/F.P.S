@@ -141,25 +141,41 @@ with nav_col:
 
     st.markdown("---")
     st.markdown("#### Delete current class")
-    if st.button("Delete selected class", key="delete_selected_class"):
-        st.session_state["confirm_delete_class"] = True
+    if not selected_class:
+        st.info("No class selected to delete.")
+    else:
+        if st.button("Delete selected class", key="delete_selected_class"):
+            # Clear any previous input and prompt for confirmation
+            if "confirm_delete_class_input" in st.session_state:
+                st.session_state.pop("confirm_delete_class_input")
+            st.session_state["confirm_delete_class"] = True
 
-    if st.session_state.get("confirm_delete_class"):
-        confirmation = st.text_input(
-            "Type DELETE to confirm deleting this class",
-            key="confirm_delete_class",
-        )
-        if st.button("Confirm delete", key="confirm_delete_submit"):
-            if confirmation.strip().upper() == "DELETE":
-                success, message = storage.delete_class(selected_class["id"])
-                if success:
-                    st.success(message)
-                    st.session_state["confirm_delete_class"] = False
-                    _safe_rerun()
+        if st.session_state.get("confirm_delete_class"):
+            confirmation = st.text_input(
+                "Type DELETE to confirm deleting this class",
+                key="confirm_delete_class_input",
+            )
+            if st.button("Confirm delete", key="confirm_delete_submit"):
+                if confirmation.strip().upper() == "DELETE":
+                    # Guard against missing selected_class
+                    if not selected_class:
+                        st.error("No class selected to delete.")
+                    else:
+                        success, message = storage.delete_class(selected_class["id"])
+                        if success:
+                            st.success(message)
+                            st.session_state["confirm_delete_class"] = False
+                            # pick a new selected class if any remain
+                            remaining = storage.get_classes()
+                            if remaining:
+                                st.session_state["selected_class_id"] = remaining[0]["id"]
+                            else:
+                                st.session_state.pop("selected_class_id", None)
+                            _safe_rerun()
+                        else:
+                            st.error(message)
                 else:
-                    st.error(message)
-            else:
-                st.error("Please type DELETE exactly to confirm deletion.")
+                    st.error("Please type DELETE exactly to confirm deletion.")
 
 with main_col:
     st.title("F.P.S")
