@@ -27,6 +27,8 @@ import streamlit as st
 
 from core.class_storage import ClassStorage
 
+DEFAULT_CLASS_NAME = "Summerschool Class Prague 2nd-14th August"
+
 app_dir = Path(__file__).resolve().parent
 pages_dir = app_dir / "pages"
 
@@ -47,11 +49,8 @@ st.markdown(
 )
 
 storage = ClassStorage()
-
-PAGE_OPTIONS = [
-    ("team_builder", "Team & Rotation Builder"),
-    ("class_library", "Class Material Library"),
-]
+if not storage.get_classes():
+    storage.add_class(DEFAULT_CLASS_NAME)
 
 PAGE_PATHS = {
     "team_builder": pages_dir / "1_Team_Builder.py",
@@ -69,47 +68,82 @@ page_modules = {
     key: load_page(path) for key, path in PAGE_PATHS.items()
 }
 
-if "page" not in st.session_state:
-    st.session_state.page = "team_builder"
+classes = storage.get_classes()
+selected_class_id = st.session_state.get("selected_class_id")
+selected_class = storage.get_class(selected_class_id) if selected_class_id else None
+if not selected_class and classes:
+    selected_class = classes[0]
+    st.session_state["selected_class_id"] = selected_class["id"]
 
-page_keys = [key for key, _ in PAGE_OPTIONS]
-page_labels = [label for _, label in PAGE_OPTIONS]
-label_to_key = {label: key for key, label in PAGE_OPTIONS}
-
-nav_col, main_col = st.columns([1, 4], gap="large")
+nav_col, main_col = st.columns([1, 5], gap="large")
 
 with nav_col:
-    st.markdown("### Workspace navigation")
-    selected_label = st.radio(
-        "Choose a folder",
-        page_labels,
-        index=page_keys.index(st.session_state.page),
-        key="page_radio",
+    st.markdown("### Classes")
+
+    class_names = [item["name"] for item in classes]
+    selected_name = st.selectbox(
+        "Choose a class",
+        class_names,
+        index=class_names.index(selected_class["name"]),
+        key="selected_class_name",
     )
-    st.session_state.page = label_to_key[selected_label]
+    if selected_name != selected_class["name"]:
+        new_selected = next(
+            item for item in classes if item["name"] == selected_name
+        )
+        st.session_state["selected_class_id"] = new_selected["id"]
+        st.experimental_rerun()
 
     st.markdown("---")
-    st.markdown("#### Quick access")
-    for key, label in PAGE_OPTIONS:
-        if st.button(label, key=f"nav_button_{key}"):
-            st.session_state.page = key
-            st.experimental_rerun()
+    st.markdown("#### Add another class")
+    new_class_name = st.text_input(
+        "Class name",
+        placeholder="Summerschool Class Prague 2nd-14th August",
+        key="new_class_name",
+    )
+    if st.button("Add next class", key="add_next_class"):
+        if not new_class_name.strip():
+            st.error("Enter a class name before adding a new class.")
+        else:
+            success, result = storage.add_class(new_class_name.strip())
+            if success:
+                st.success(f"Created class '{result['name']}'.")
+                st.session_state["selected_class_id"] = result["id"]
+                st.experimental_rerun()
+            else:
+                st.error(result)
+
+    st.markdown("---")
+    st.markdown("#### Delete current class")
+    if st.button("Delete selected class", key="delete_selected_class"):
+        st.session_state["confirm_delete_class"] = True
+
+    if st.session_state.get("confirm_delete_class"):
+        confirmation = st.text_input(
+            "Type DELETE to confirm deleting this class",
+            key="confirm_delete_class",
+        )
+        if st.button("Confirm delete", key="confirm_delete_submit"):
+            if confirmation.strip().upper() == "DELETE":
+                success, message = storage.delete_class(selected_class["id"])
+                if success:
+                    st.success(message)
+                    st.session_state["confirm_delete_class"] = False
+                    st.experimental_rerun()
+                else:
+                    st.error(message)
+            else:
+                st.error("Please type DELETE exactly to confirm deletion.")
 
 with main_col:
     st.title("F.P.S")
+    st.subheader(selected_class["name"])
     st.write(
-        "Felipe's Problem Solver dashboard brings together team planning and class material management in one place."
-    )
-    st.write(
-        "Choose one of the folders below to create class groups, upload documents, and build the class library over time."
+        "This class has a team rotation builder and a module-based materials area."
     )
 
-    counts = {
-        key: len(storage.get_classes(key)) for key in page_keys
-    }
-    card_cols = st.columns(2, gap="large")
-    for card_col, key in zip(card_cols, page_keys):
-        card_col.metric(page_labels[page_keys.index(key)], f"{counts[key]} classes")
-
-    st.divider()
-    page_modules[st.session_state.page].render(storage)
+    tabs = st.tabs(["Team Rotation Builder", "Class Material Library"])
+    with tabs[0]:
+        page_modules["team_builder"].render(storage, selected_class["id"])
+    with tabs[1]:
+        page_modules["class_library"].render(storage, selected_class["id"])

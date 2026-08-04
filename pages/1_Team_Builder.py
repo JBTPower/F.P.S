@@ -1,26 +1,44 @@
 import csv
 import io
 import random
-from pathlib import Path
-
 import streamlit as st
 
 
-def render(storage):
-    category_key = "team_builder"
-    category_label = storage.get_category_label(category_key)
-
-    st.header(category_label)
-    st.caption(f"Default folder: {category_label}")
+def render(storage, class_id: str):
+    st.header("Team Rotation Builder")
     st.write(
-        "Enter your student roster or upload a class sheet, then create final team groups or rotations for Felipe's class logic."
+        "Build Felipe's team mix for the class period. "
+        "Once generated, the latest rotation is kept as the active class overview."
     )
 
-    _render_team_builder(storage, category_key)
+    latest_rotation = storage.get_latest_rotation(class_id)
+    if latest_rotation:
+        with st.expander("Current rotation overview", expanded=True):
+            st.write(f"Created: {latest_rotation['created_at']}")
+            st.write(f"Students: {latest_rotation['student_count']}")
+            st.write(f"Group size: {latest_rotation['group_size']}")
+            st.write(f"Seed: {latest_rotation['seed']}")
+            for index, group in enumerate(latest_rotation["groups"], start=1):
+                st.markdown(f"**Group {index}**")
+                for member in group:
+                    st.write(f"- {member}")
+            st.download_button(
+                "Download current rotation as CSV",
+                data=_rotation_csv(latest_rotation),
+                file_name="fps_current_rotation.csv",
+                mime="text/csv",
+            )
+    else:
+        st.info("No rotation has been generated for this class yet.")
+
     st.divider()
-    _render_new_class_panel(storage, category_key, category_label)
-    st.divider()
-    _render_existing_classes(storage, category_key)
+    _render_team_builder(storage, class_id)
+
+    past = storage.get_rotations(class_id)
+    if past:
+        with st.expander("Past rotation history", expanded=False):
+            for rotation in reversed(past[:-1]):
+                st.write(f"{rotation['created_at']} — {rotation['student_count']} students")
 
 
 def _parse_names(raw_text):
@@ -38,8 +56,8 @@ def _parse_names(raw_text):
     return names
 
 
-def _render_team_builder(storage, category_key: str):
-    st.subheader("Team creation")
+def _render_team_builder(storage, class_id: str):
+    st.subheader("Generate team rotation")
     roster_text = st.text_area(
         "Paste student names here",
         placeholder="One name per line, or comma-separated list",
@@ -90,7 +108,7 @@ def _render_team_builder(storage, category_key: str):
     with cols[2]:
         include_header = st.checkbox("Show group headers", value=True, key="team_headers")
 
-    if st.button("Generate team groups", key="generate_team_groups"):
+    if st.button("Generate rotation", key="generate_team_rotation"):
         if not names:
             st.error("Please paste or upload a student roster first.")
             return
@@ -101,76 +119,25 @@ def _render_team_builder(storage, category_key: str):
             names[i : i + group_size] for i in range(0, len(names), group_size)
         ]
 
-        st.success(f"Created {len(groups)} groups from {len(names)} students.")
-        output_lines = []
-        for index, group in enumerate(groups, start=1):
-            if include_header:
-                st.markdown(f"**Group {index}**")
-            for name in group:
-                st.write(f"- {name}")
-            output_lines.append(f"Group {index}")
-            output_lines.extend(group)
-            output_lines.append("")
-
-        csv_buffer = io.StringIO()
-        writer = csv.writer(csv_buffer)
-        writer.writerow(["Group", "Student"])
-        for index, group in enumerate(groups, start=1):
-            for name in group:
-                writer.writerow([index, name])
-
-        st.download_button(
-            "Download team mix as CSV",
-            data=csv_buffer.getvalue(),
-            file_name="fps_team_mix.csv",
-            mime="text/csv",
+        success, result = storage.add_rotation(
+            class_id,
+            groups,
+            group_size,
+            seed,
+            raw_names,
         )
+        if success:
+            st.success("Rotation saved for the class period.")
+            st.experimental_rerun()
+        else:
+            st.error(result)
 
 
-def _render_new_class_panel(storage, category_key: str, category_label: str):
-    with st.expander("Create a new class folder", expanded=True):
-        new_name = st.text_input(
-            "Class name",
-            placeholder="Enter a new class name for Team & Rotation Builder",
-            key=f"new_class_name_{category_key}",
-        )
-        if st.button("Create class", key=f"create_class_{category_key}"):
-            success, result = storage.add_class(new_name, category_key)
-            if success:
-                st.success(f"Created class '{result['name']}' in {category_label}.")
-                st.experimental_rerun()
-            else:
-                st.error(result)
-
-
-def _render_existing_classes(storage, category_key: str):
-    classes = storage.get_classes(category_key)
-    if not classes:
-        st.info("No classes have been created yet in this folder.")
-        return
-
-    for class_item in classes:
-        with st.expander(class_item["name"], expanded=False):
-            st.write(f"Folder: **{class_item['folder']}**")
-            st.write("Use the delete action below to remove this class permanently.")
-
-            delete_key = f"delete_{class_item['id']}"
-            confirm_key = f"confirm_delete_{class_item['id']}"
-            if st.button("Delete class", key=delete_key):
-                st.session_state[delete_key] = True
-
-            if st.session_state.get(delete_key, False):
-                confirmation = st.text_input(
-                    "Type DELETE to confirm deletion",
-                    key=confirm_key,
-                )
-                if st.button("Confirm deletion", key=f"confirm_submit_{class_item['id']}"):
-                    if confirmation.strip().upper() == "DELETE":
-                        success, message = storage.delete_class(class_item["id"])
-                        if success:
-                            st.success(message)
-                            st.experimental_rerun()
-                        else:
-                            st.error(message)
-                    else:
-                        st.error("Please type DELETE exactly to confirm deletion.")
+def _rotation_csv(rotation):
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["Group", "Student"])
+    for index, group in enumerate(rotation["groups"], start=1):
+        for student in group:
+            writer.writerow([index, student])
+    return buffer.getvalue()
