@@ -17,7 +17,6 @@ def _default_data() -> dict:
 def _normalize_data(data: Optional[dict]) -> dict:
     if not isinstance(data, dict):
         return _default_data()
-
     if "classes" not in data or not isinstance(data["classes"], list):
         data["classes"] = []
     if "files" not in data or not isinstance(data["files"], list):
@@ -69,11 +68,7 @@ class ClassStorage:
         name = name.strip()
         if not name:
             return False, "Class name cannot be empty."
-
-        if any(
-            item.get("name", "").strip().lower() == name.lower()
-            for item in self._data["classes"]
-        ):
+        if any(item.get("name", "").strip().lower() == name.lower() for item in self._data["classes"]):
             return False, "A class with that name already exists."
 
         new_class = {
@@ -90,19 +85,14 @@ class ClassStorage:
         class_item = self.get_class(class_id)
         if not class_item:
             return False, "Class not found."
-
         class_item["name"] = name.strip() or class_item["name"]
         self._save()
         return True, "Class updated successfully."
 
     def delete_class(self, class_id: str) -> Tuple[bool, str]:
         before = len(self._data["classes"])
-        self._data["classes"] = [
-            item for item in self._data["classes"] if item.get("id") != class_id
-        ]
-        self._data["files"] = [
-            item for item in self._data["files"] if item.get("class_id") != class_id
-        ]
+        self._data["classes"] = [item for item in self._data["classes"] if item.get("id") != class_id]
+        self._data["files"] = [item for item in self._data["files"] if item.get("class_id") != class_id]
         if len(self._data["classes"]) == before:
             return False, "Class not found."
 
@@ -113,14 +103,7 @@ class ClassStorage:
         self._save()
         return True, "Class deleted successfully."
 
-    def add_rotation(
-        self,
-        class_id: str,
-        groups: List[List[str]],
-        group_size: int,
-        seed: int,
-        raw_input: str,
-    ) -> Tuple[bool, Union[str, Dict]]:
+    def add_rotation(self, class_id: str, groups: List[List[str]], group_size: int, seed: int, raw_input: str) -> Tuple[bool, Union[str, Dict]]:
         class_item = self.get_class(class_id)
         if not class_item:
             return False, "Class not found."
@@ -140,45 +123,26 @@ class ClassStorage:
 
     def get_rotations(self, class_id: str) -> List[Dict]:
         class_item = self.get_class(class_id)
-        if not class_item:
-            return []
-        return list(class_item.get("rotation_history", []))
+        return list(class_item.get("rotation_history", [])) if class_item else []
 
     def get_latest_rotation(self, class_id: str) -> Optional[Dict]:
         rotations = self.get_rotations(class_id)
         return rotations[-1] if rotations else None
 
     def get_modules_for_class(self, class_id: str) -> List[str]:
-        names = set(DEFAULT_MODULES)
+        modules = set(DEFAULT_MODULES)
         for file_item in self._data["files"]:
             if file_item.get("class_id") == class_id:
-                names.add(file_item.get("module", "Module 1"))
-        return sorted(names)
+                modules.add(file_item.get("module", "Module 1"))
+        return sorted(modules)
 
-    def get_files_for_class(
-        self, class_id: str, module: Optional[str] = None
-    ) -> List[Dict]:
-        result = [
-            item
-            for item in self._data["files"]
-            if item.get("class_id") == class_id
-        ]
+    def get_files_for_class(self, class_id: str, module: Optional[str] = None) -> List[Dict]:
+        files = [item for item in self._data["files"] if item.get("class_id") == class_id]
         if module:
-            result = [
-                item
-                for item in result
-                if item.get("module", "") == module
-            ]
-        return result
+            files = [item for item in files if item.get("module") == module]
+        return files
 
-    def upload_file(
-        self,
-        class_id: str,
-        module: str,
-        file_name: str,
-        content: bytes,
-        mime_type: str,
-    ) -> Tuple[bool, Union[str, Dict]]:
+    def upload_file(self, class_id: str, module: str, file_name: str, content: bytes, mime_type: str) -> Tuple[bool, Union[str, Dict]]:
         class_item = self.get_class(class_id)
         if not class_item:
             return False, "Class not found."
@@ -207,12 +171,7 @@ class ClassStorage:
         return True, file_item
 
     def delete_file(self, file_id: str) -> Tuple[bool, str]:
-        file_item = None
-        for item in self._data["files"]:
-            if item.get("id") == file_id:
-                file_item = item
-                break
-
+        file_item = next((item for item in self._data["files"] if item.get("id") == file_id), None)
         if not file_item:
             return False, "File not found."
 
@@ -220,8 +179,6 @@ class ClassStorage:
         if file_path.exists():
             file_path.unlink()
 
-        self._data["files"] = [
-            item for item in self._data["files"] if item.get("id") != file_id
-        ]
+        self._data["files"] = [item for item in self._data["files"] if item.get("id") != file_id]
         self._save()
         return True, "File deleted successfully."

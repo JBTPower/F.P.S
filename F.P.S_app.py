@@ -80,19 +80,22 @@ nav_col, main_col = st.columns([1, 5], gap="large")
 with nav_col:
     st.markdown("### Classes")
 
-    class_names = [item["name"] for item in classes]
-    selected_name = st.selectbox(
-        "Choose a class",
-        class_names,
-        index=class_names.index(selected_class["name"]),
-        key="selected_class_name",
-    )
-    if selected_name != selected_class["name"]:
-        new_selected = next(
-            item for item in classes if item["name"] == selected_name
+    if classes:
+        class_names = [item["name"] for item in classes]
+        selected_name = st.selectbox(
+            "Choose a class",
+            class_names,
+            index=class_names.index(selected_class["name"]),
+            key="selected_class_name",
         )
-        st.session_state["selected_class_id"] = new_selected["id"]
-        st.experimental_rerun()
+        if selected_name != selected_class["name"]:
+            new_selected = next(
+                item for item in classes if item["name"] == selected_name
+            )
+            st.session_state["selected_class_id"] = new_selected["id"]
+            st.experimental_rerun()
+    else:
+        st.info("No classes available. Add a new class below.")
 
     st.markdown("---")
     st.markdown("#### Add another class")
@@ -137,13 +140,16 @@ with nav_col:
 
 with main_col:
     st.title("F.P.S")
-    st.subheader(selected_class["name"])
-    st.write(
-        "This class has a team rotation builder and a module-based materials area."
-    )
+    if not selected_class:
+        st.warning("No class is selected. Please add or choose a class.")
+    else:
+        st.subheader(selected_class["name"])
+        st.write(
+            "This class has a team rotation builder and a module-based materials area."
+        )
 
-    tabs = st.tabs(["Team Rotation Builder", "Class Material Library"])
-    with tabs[0]:
-        page_modules["team_builder"].render(storage, selected_class["id"])
-    with tabs[1]:
-        page_modules["class_library"].render(storage, selected_class["id"])
+        tabs = st.tabs(["Team Rotation Builder", "Class Material Library"])
+        with tabs[0]:
+            page_modules["team_builder"].render(storage, selected_class["id"])
+        with tabs[1]:
+            page_modules["class_library"].render(storage, selected_class["id"])
