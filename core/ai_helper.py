@@ -24,7 +24,9 @@ def get_ai_client():
     )
 
 
-MODEL = "google/gemini-2.5-flash"
+def get_ai_model() -> str:
+    """Gets the OpenRouter model from Streamlit secrets, defaulting to google/gemini-2.5-flash."""
+    return st.secrets.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
 
 
 def _call_ai(system_prompt: str, user_prompt: str) -> str:
@@ -35,7 +37,7 @@ def _call_ai(system_prompt: str, user_prompt: str) -> str:
 
     try:
         response = client.chat.completions.create(
-            model=MODEL,
+            model=get_ai_model(),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -54,7 +56,7 @@ def _call_ai_chat(messages: list) -> str:
 
     try:
         response = client.chat.completions.create(
-            model=MODEL,
+            model=get_ai_model(),
             messages=messages,
         )
         return response.choices[0].message.content

@@ -13,7 +13,7 @@ import random
 from pathlib import Path
 from core.ai_helper import (
     extract_text_from_bytes,
-    summarize_document,
+    summarize_document
     generate_quiz,
     chat_with_material,
     review_material,
