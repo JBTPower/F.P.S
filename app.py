@@ -1,3 +1,4 @@
-import runpy
+import pathlib
 
-runpy.run_path("F.P.S_app.py", run_name="__main__")
+app_path = pathlib.Path(__file__).parent / "F.P.S_app.py"
+exec(app_path.read_text(encoding="utf-8"), globals())
