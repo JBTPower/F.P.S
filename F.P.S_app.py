@@ -146,10 +146,12 @@ with main_col:
         unsafe_allow_html=True
     )
 
-    # Display team banner image if present
+    # Display team banner image if present (centered & resized)
     banner_path = Path("assets/team_banner.png")
     if banner_path.exists():
-        st.image(str(banner_path), use_container_width=True)
+        img_col1, img_col2, img_col3 = st.columns([1, 2, 1])
+        with img_col2:
+            st.image(str(banner_path), use_container_width=True)
 
 
     if not active_class:
