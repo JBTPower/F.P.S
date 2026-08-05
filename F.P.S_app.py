@@ -137,27 +137,29 @@ with nav_col:
 
 # --- MAIN WORKSPACE ---
 with main_col:
-    header_col1, header_col2 = st.columns([2, 1.3])
-    with header_col1:
-        st.markdown(
-            """
-            <div style="padding-bottom: 0.5rem;">
-                <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">Summer Spires Under Prague</h1>
-                <p style="color: #4361EE; font-size: 0.95rem; font-weight: 600; margin-top: 2px;">F.P.S (Felipe's Problem Solver)</p>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
+    st.markdown(
+        """
+        <div style="padding-bottom: 0.5rem;">
+            <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">Summer Spires Under Prague</h1>
+            <p style="color: #4361EE; font-size: 0.95rem; font-weight: 600; margin-top: 2px;">F.P.S (Felipe's Problem Solver)</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
-    with header_col2:
-        prague_video_path = Path("assets/prague spires transformation.mp4")
-        if prague_video_path.exists():
+    # Video placed beneath title and above workspace (centered & smaller)
+    prague_video_path = Path("assets/prague spires transformation.mp4")
+    if prague_video_path.exists():
+        vcol1, vcol2, vcol3 = st.columns([1, 1.8, 1])
+        with vcol2:
             st.video(
                 str(prague_video_path), 
                 autoplay=True, 
                 loop=False, 
                 muted=True
             )
+
+
 
     if not active_class:
 
