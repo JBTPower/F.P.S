@@ -22,11 +22,12 @@ from core.ai_helper import (
 
 # --- PAGE CONFIG & MODERN CSS ---
 st.set_page_config(
-    page_title="F.P.S Dashboard",
+    page_title="Summer Spires Under Prague",
     page_icon="🧩",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
 
 st.markdown(
     """
@@ -141,21 +142,25 @@ with main_col:
         st.markdown(
             """
             <div style="padding-bottom: 0.5rem;">
-                <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">F.P.S.</h1>
-                <h4 style="color: #4361EE; font-weight: 600; margin-top: -5px;">Felipe's Problem Solver</h4>
+                <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">Summer Spires Under Prague</h1>
+                <p style="color: #4361EE; font-size: 0.95rem; font-weight: 600; margin-top: 2px;">F.P.S (Felipe's Problem Solver)</p>
             </div>
             """, 
             unsafe_allow_html=True
         )
 
     with header_col2:
-        banner_path = Path("assets/team_banner.png")
-        if banner_path.exists():
-            st.image(str(banner_path), use_container_width=True)
-
-
+        prague_video_path = Path("assets/prague spires transformation.mp4")
+        if prague_video_path.exists():
+            st.video(
+                str(prague_video_path), 
+                autoplay=True, 
+                loop=False, 
+                muted=True
+            )
 
     if not active_class:
+
         st.warning("Please create or select a class from the left menu.")
     else:
         st.markdown(f"### 📍 Workspace: **{active_class['name']}**")
