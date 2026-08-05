@@ -136,7 +136,7 @@ with nav_col:
 
 # --- MAIN WORKSPACE ---
 with main_col:
-    header_col1, header_col2 = st.columns([3, 1])
+    header_col1, header_col2 = st.columns([2, 1.3])
     with header_col1:
         st.markdown(
             """
