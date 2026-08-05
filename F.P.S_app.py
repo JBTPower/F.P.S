@@ -136,22 +136,23 @@ with nav_col:
 
 # --- MAIN WORKSPACE ---
 with main_col:
-    st.markdown(
-        """
-        <div style="padding-bottom: 0.5rem;">
-            <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">F.P.S.</h1>
-            <h4 style="color: #4361EE; font-weight: 600; margin-top: -5px;">Felipe's Problem Solver</h4>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    header_col1, header_col2 = st.columns([3, 1])
+    with header_col1:
+        st.markdown(
+            """
+            <div style="padding-bottom: 0.5rem;">
+                <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">F.P.S.</h1>
+                <h4 style="color: #4361EE; font-weight: 600; margin-top: -5px;">Felipe's Problem Solver</h4>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
 
-    # Display team banner image if present (centered & resized)
-    banner_path = Path("assets/team_banner.png")
-    if banner_path.exists():
-        img_col1, img_col2, img_col3 = st.columns([1, 2, 1])
-        with img_col2:
+    with header_col2:
+        banner_path = Path("assets/team_banner.png")
+        if banner_path.exists():
             st.image(str(banner_path), use_container_width=True)
+
 
 
     if not active_class:
