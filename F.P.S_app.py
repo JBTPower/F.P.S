@@ -138,13 +138,19 @@ with nav_col:
 with main_col:
     st.markdown(
         """
-        <div style="padding-bottom: 1rem;">
+        <div style="padding-bottom: 0.5rem;">
             <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">F.P.S.</h1>
             <h4 style="color: #4361EE; font-weight: 600; margin-top: -5px;">Felipe's Problem Solver</h4>
         </div>
         """, 
         unsafe_allow_html=True
     )
+
+    # Display team banner image if present
+    banner_path = Path("assets/team_banner.png")
+    if banner_path.exists():
+        st.image(str(banner_path), use_container_width=True)
+
 
     if not active_class:
         st.warning("Please create or select a class from the left menu.")
