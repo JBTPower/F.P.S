@@ -84,12 +84,41 @@ if "fps_data" not in st.session_state:
 
 data = st.session_state["fps_data"]
 
-# --- TOP BANNER: ESS Logo (full-width, above everything) ---
-logo_path = Path("assets/ESS logo.png")
+# --- TOP BANNER: ESS Logo (reduced size, centered) ---
+logo_path = Path("assets/PESS logo.png")
 if logo_path.exists():
-    st.image(str(logo_path), use_container_width=True)
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.image(str(logo_path), use_container_width=True)
 
 st.markdown("---")
+
+# --- AUTHENTICATION ---
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+
+if not st.session_state["logged_in"]:
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<h3 style='text-align: center;'>🔒 Please Login</h3>", unsafe_allow_html=True)
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login", use_container_width=True)
+            if submitted:
+                if username == "student1" and password == "PESS26":
+                    st.session_state["logged_in"] = True
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
+    st.stop()
+
+# --- LOGOUT BUTTON ---
+logout_col1, logout_col2 = st.columns([8.5, 1.5])
+with logout_col2:
+    if st.button("Logout", use_container_width=True):
+        st.session_state["logged_in"] = False
+        st.rerun()
 
 # --- NAVIGATION / CLASS MANAGEMENT ---
 nav_col, main_col = st.columns([1.3, 4.7], gap="large")
@@ -162,23 +191,23 @@ with main_col:
         <style>
         div[data-testid="stVideo"] iframe,
         div[data-testid="stVideo"] video {
-            max-height: 220px !important;
+            max-height: 160px !important;
             border-radius: 8px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    vid1_col, vid2_col, spacer = st.columns([1, 1, 1])
+    vid1_col, vid2_col, spacer = st.columns([1, 1, 2])
     with vid1_col:
         anthem_path = Path("assets/Summer_Under_Prague_Spires.mp4")
         if anthem_path.exists():
             st.caption("🎵 Summer Under Prague Spires")
-            st.video(str(anthem_path), autoplay=True, loop=False, muted=True)
+            st.video(str(anthem_path), autoplay=False, loop=False, muted=True)
     with vid2_col:
         prague_video_path = Path("assets/prague spires transformation.mp4")
         if prague_video_path.exists():
             st.caption("🎬 Prague Spires Transformation")
-            st.video(str(prague_video_path), autoplay=True, loop=False, muted=True)
+            st.video(str(prague_video_path), autoplay=False, loop=False, muted=True)
 
 
 
