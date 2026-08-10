@@ -43,6 +43,9 @@ def _call_ai(system_prompt: str, user_prompt: str) -> str:
                 {"role": "user", "content": user_prompt},
             ],
         )
+        st.session_state["ai_requests"] = st.session_state.get("ai_requests", 0) + 1
+        if hasattr(response, 'usage') and response.usage:
+            st.session_state["ai_tokens"] = st.session_state.get("ai_tokens", 0) + getattr(response.usage, 'total_tokens', 0)
         return response.choices[0].message.content
     except Exception as e:
         return f"⚠️ AI Error: {str(e)}"
@@ -59,6 +62,9 @@ def _call_ai_chat(messages: list) -> str:
             model=get_ai_model(),
             messages=messages,
         )
+        st.session_state["ai_requests"] = st.session_state.get("ai_requests", 0) + 1
+        if hasattr(response, 'usage') and response.usage:
+            st.session_state["ai_tokens"] = st.session_state.get("ai_tokens", 0) + getattr(response.usage, 'total_tokens', 0)
         return response.choices[0].message.content
     except Exception as e:
         return f"⚠️ AI Error: {str(e)}"

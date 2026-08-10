@@ -34,7 +34,7 @@ st.markdown(
     """
     <style>
     footer {visibility: hidden;}
-    [data-testid="stSidebar"] { display: none; }
+    [data-testid="stSidebarNav"] { display: none !important; }
     .stApp { background-color: #F8F9FA; }
     [data-testid="column"]:nth-of-type(1) {
         background-color: #FFFFFF; padding: 1.5rem; border-radius: 12px;
@@ -59,6 +59,35 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# --- SIDEBAR (AI & API OVERVIEW) ---
+with st.sidebar:
+    st.markdown("## 🤖 AI Dashboard")
+    st.markdown("Monitor your OpenRouter API usage here.")
+    st.markdown("---")
+    
+    api_key = st.secrets.get("OPENROUTER_API_KEY")
+    if api_key:
+        st.success("✅ **Status:** Connected")
+        st.caption(f"**Key:** `...{api_key[-4:] if len(api_key)>4 else '****'}`")
+    else:
+        st.error("❌ **Status:** Disconnected")
+        st.caption("No `OPENROUTER_API_KEY` found in `.streamlit/secrets.toml`.")
+        
+    model = st.secrets.get("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+    st.info(f"🧠 **Model:** `{model}`")
+    
+    st.markdown("---")
+    st.markdown("### 📊 Session Usage")
+    
+    requests = st.session_state.get("ai_requests", 0)
+    tokens = st.session_state.get("ai_tokens", 0)
+    
+    mc1, mc2 = st.columns(2)
+    mc1.metric("Requests", requests)
+    mc2.metric("Tokens", f"{tokens:,}") 
+
+    st.markdown("---")
 
 # --- IN-MEMORY STORAGE ENGINE (Simulating Folders & Subfolders) ---
 if "fps_data" not in st.session_state:
