@@ -8,6 +8,7 @@ Includes:
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import random
 from pathlib import Path
@@ -32,7 +33,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+    footer {visibility: hidden;}
     [data-testid="stSidebar"] { display: none; }
     .stApp { background-color: #F8F9FA; }
     [data-testid="column"]:nth-of-type(1) {
@@ -100,6 +101,12 @@ if "logged_in" not in st.session_state:
 if not st.session_state["logged_in"]:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
+        # --- STARTER VIDEO ON LOGIN ---
+        starter_video_path = Path("assets/starter_video.mp4")
+        if starter_video_path.exists():
+            st.video(str(starter_video_path), autoplay=True, loop=True, muted=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            
         st.markdown("<h3 style='text-align: center;'>🔒 Please Login</h3>", unsafe_allow_html=True)
         with st.form("login_form"):
             username = st.text_input("Username")
@@ -112,13 +119,6 @@ if not st.session_state["logged_in"]:
                 else:
                     st.error("Invalid username or password")
     st.stop()
-
-# --- LOGOUT BUTTON ---
-logout_col1, logout_col2 = st.columns([8.5, 1.5])
-with logout_col2:
-    if st.button("Logout", use_container_width=True):
-        st.session_state["logged_in"] = False
-        st.rerun()
 
 # --- NAVIGATION / CLASS MANAGEMENT ---
 nav_col, main_col = st.columns([1.3, 4.7], gap="large")
@@ -171,6 +171,46 @@ with nav_col:
                     data["active_class_id"] = remaining[0] if remaining else None
                     st.rerun()
 
+    st.markdown("---")
+    # --- STARTER VIDEO EXPANDER (LOGGED IN) ---
+    starter_video_path = Path("assets/starter_video.mp4")
+    if starter_video_path.exists():
+        with st.expander("🎬 Watch Starter Video", expanded=False):
+            st.video(str(starter_video_path), autoplay=False, loop=False, muted=False)
+            st.caption("Introduction to F.P.S and Summer Spires Under Prague.")
+
+    # --- PRAGUE VIDEOS (LOGGED IN) ---
+    anthem_path = Path("assets/Summer_Under_Prague_Spires.mp4")
+    if anthem_path.exists():
+        with st.expander("🎵 Summer Under Prague Spires", expanded=False):
+            st.video(str(anthem_path), autoplay=False, loop=False, muted=False)
+            
+    prague_video_path = Path("assets/prague spires transformation.mp4")
+    if prague_video_path.exists():
+        with st.expander("🎬 Prague Transformation", expanded=False):
+            st.video(str(prague_video_path), autoplay=False, loop=False, muted=False)
+            
+    st.markdown("---")
+    # --- LOGOUT BUTTON ---
+    st.markdown("""
+        <span id="logout-button-hook"></span>
+        <style>
+        /* Target the element container exactly following the hook */
+        div.element-container:has(#logout-button-hook) + div.element-container button {
+            background-color: #E53935 !important;
+            color: white !important;
+            border-color: #E53935 !important;
+        }
+        div.element-container:has(#logout-button-hook) + div.element-container button:hover {
+            background-color: #D32F2F !important;
+            border-color: #D32F2F !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    if st.button("Logout", use_container_width=True):
+        st.session_state["logged_in"] = False
+        st.rerun()
+
 # --- MAIN WORKSPACE ---
 with main_col:
 
@@ -184,32 +224,6 @@ with main_col:
         """, 
         unsafe_allow_html=True
     )
-
-    # --- BOTH VIDEOS side by side, same height, beneath the title ---
-    # Inject CSS to cap both video players to equal height
-    st.markdown("""
-        <style>
-        div[data-testid="stVideo"] iframe,
-        div[data-testid="stVideo"] video {
-            max-height: 160px !important;
-            border-radius: 8px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    vid1_col, vid2_col, spacer = st.columns([1, 1, 2])
-    with vid1_col:
-        anthem_path = Path("assets/Summer_Under_Prague_Spires.mp4")
-        if anthem_path.exists():
-            st.caption("🎵 Summer Under Prague Spires")
-            st.video(str(anthem_path), autoplay=False, loop=False, muted=True)
-    with vid2_col:
-        prague_video_path = Path("assets/prague spires transformation.mp4")
-        if prague_video_path.exists():
-            st.caption("🎬 Prague Spires Transformation")
-            st.video(str(prague_video_path), autoplay=False, loop=False, muted=True)
-
-
 
     st.markdown("---")
 
@@ -479,7 +493,7 @@ with main_col:
 
 
                     # AI Sub-tabs
-                    ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "💬 Study Chat", "📋 Material Reviewer"])
+                    ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "💬 Study Chat (RAG)", "📋 Material Reviewer"])
 
                     # ----- SUMMARIZER -----
                     with ai_tabs[0]:
@@ -551,3 +565,148 @@ with main_col:
                                 st.session_state["ai_review"] = review
                         if "ai_review" in st.session_state:
                             st.markdown(st.session_state["ai_review"])
+
+# --- FOOTER / STUDENT HUB ---
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("## 🎒 Summer School Hub & Explore")
+
+footer_col1, footer_col2, footer_col3 = st.columns([1.5, 1.5, 2])
+
+with footer_col1:
+    st.markdown("### 🏫 European Summer School")
+    st.markdown("""
+    **Address:**<br>
+    Opletalova 23<br>
+    110 00 Prague, Czechia<br><br>
+    **Contact:**<br>
+    📧 info@europeansummerschool.com<br>
+    📞 +420 776 367 740<br>
+    🌐 [europeansummerschool.com](https://europeansummerschool.com/)
+    """, unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 🛏️ Botič Student House (Accommodation)")
+    components.html(
+        '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2561.123!2d14.453!3d50.065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470b938c4b752945%3A0x89fc32549216bd98!2zSyBCb3RpxI1pIDE0MzkvNSwgMTAxIDAwIFByYWhhIDEwLVZyxaFvdmljZSwgQ3plY2hpYQ!5e0!3m2!1sen!2scz!4v1" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>',
+        height=220
+    )
+
+with footer_col2:
+    st.markdown("### 🎓 Discover More Courses")
+    st.info("""
+    **Looking to expand your horizons?** 
+    - AI & Machine Learning in Practice
+    - Behavioral Economics & Psychology
+    - Corporate Finance & Valuation
+    - European Politics
+    """)
+    st.markdown("[🌐 View Full Prague Summer School Catalog](https://www.summerschoolsineurope.eu/destination/european-summer-school-in-prague/)", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 🏛️ Classes: French Institute")
+    st.markdown("Štěpánská 35, 111 21 Prague 1, Czechia", unsafe_allow_html=True)
+    components.html(
+        '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2560.123!2d14.423!3d50.078!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470b94eba2e66699%3A0x7d6a5c108c4a4a4b!2zRnJhbmNvdXpza8O9IGluc3RpdHV0IHYgUHJhemU!5e0!3m2!1sen!2scz!4v1" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>',
+        height=220
+    )
+
+with footer_col3:
+    st.markdown("### 🕹️ Study Break: Retro Snake")
+    st.caption("Need a mental break? Click the game board and use your arrow keys to play!")
+    components.html("""
+    <!DOCTYPE html>
+    <html>
+    <head><style>
+    body {background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; margin:0; font-family: sans-serif;}
+    canvas {background: #212529; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 5px; outline: none; cursor: pointer;}
+    .score {font-size: 16px; font-weight: bold; color: #4361EE; margin-bottom: 5px;}
+    </style></head>
+    <body>
+    <div class="score">Score: <span id="score">0</span></div>
+    <canvas id="game" width="300" height="300" tabindex="1"></canvas>
+    <script>
+    const canvas = document.getElementById('game');
+    const context = canvas.getContext('2d');
+    const grid = 15;
+    let count = 0;
+    let score = 0;
+    let snake = { x: 150, y: 150, dx: grid, dy: 0, cells: [], maxCells: 4 };
+    let apple = { x: 105, y: 105 };
+    let isPlaying = false;
+    
+    function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
+    
+    function loop() {
+        requestAnimationFrame(loop);
+        
+        if (!isPlaying) {
+            context.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Slight darkening
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = 'white';
+            context.font = '20px sans-serif';
+            context.textAlign = 'center';
+            context.fillText('Click to Play / Resume', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        if (++count < 6) return;
+        count = 0;
+        context.clearRect(0,0,canvas.width,canvas.height);
+        
+        snake.x += snake.dx;
+        snake.y += snake.dy;
+        
+        if (snake.x < 0) snake.x = canvas.width - grid;
+        else if (snake.x >= canvas.width) snake.x = 0;
+        if (snake.y < 0) snake.y = canvas.height - grid;
+        else if (snake.y >= canvas.height) snake.y = 0;
+        
+        snake.cells.unshift({x: snake.x, y: snake.y});
+        if (snake.cells.length > snake.maxCells) snake.cells.pop();
+        
+        context.fillStyle = '#ff4b4b';
+        context.fillRect(apple.x, apple.y, grid-1, grid-1);
+        
+        context.fillStyle = '#388E3C';
+        snake.cells.forEach(function(cell, index) {
+            context.fillRect(cell.x, cell.y, grid-1, grid-1);
+            if (cell.x === apple.x && cell.y === apple.y) {
+                snake.maxCells++;
+                score++;
+                document.getElementById('score').innerText = score;
+                apple.x = getRandomInt(0, 20) * grid;
+                apple.y = getRandomInt(0, 20) * grid;
+            }
+            for (let i = index + 1; i < snake.cells.length; i++) {
+                if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                    snake.x = 150; snake.y = 150; snake.cells = []; snake.maxCells = 4;
+                    snake.dx = grid; snake.dy = 0; score = 0; document.getElementById('score').innerText = score;
+                }
+            }
+        });
+    }
+    
+    canvas.addEventListener('keydown', function(e) {
+        if([37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+            e.preventDefault();
+        }
+        if (e.which === 37 && snake.dx === 0) { snake.dx = -grid; snake.dy = 0; }
+        else if (e.which === 38 && snake.dy === 0) { snake.dy = -grid; snake.dx = 0; }
+        else if (e.which === 39 && snake.dx === 0) { snake.dx = grid; snake.dy = 0; }
+        else if (e.which === 40 && snake.dy === 0) { snake.dy = grid; snake.dx = 0; }
+    });
+    
+    canvas.addEventListener('click', () => canvas.focus());
+    canvas.addEventListener('focus', () => { isPlaying = true; });
+    canvas.addEventListener('blur', () => { isPlaying = false; });
+    
+    // Initial draw before loop takes over
+    context.fillStyle = 'white';
+    context.font = '20px sans-serif';
+    context.textAlign = 'center';
+    context.fillText('Click to Play', canvas.width / 2, canvas.height / 2);
+    
+    requestAnimationFrame(loop);
+    </script>
+    </body>
+    </html>
+    """, height=360)
