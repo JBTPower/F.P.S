@@ -21,19 +21,6 @@ from core.ai_helper import (
     generate_team_icebreaker,
     generate_flashcards,
 )
-import requests
-from streamlit_lottie import st_lottie
-
-@st.cache_data
-def load_lottieurl(url: str):
-    try:
-        r = requests.get(url, timeout=5)
-        if r.status_code != 200:
-            return None
-        return r.json()
-    except Exception:
-        return None
-
 # --- PAGE CONFIG & MODERN CSS ---
 st.set_page_config(
     page_title="Summer Spires Under Prague",
@@ -846,10 +833,6 @@ with footer_col3:
 
 # --- SIDEBAR (AI & API OVERVIEW) ---
 with st.sidebar:
-    lottie_anim = load_lottieurl("https://lottie.host/8cd7b2f4-7e79-4560-8f92-5eb3c0423985/L1z4j8fU8B.json")
-    if lottie_anim:
-        st_lottie(lottie_anim, height=150, key="sidebar_lottie")
-        
     # 1. Student Profile
     user_name = st.session_state.get("username", "Student").capitalize()
     st.markdown(f"## 👋 Welcome, {user_name}!")
