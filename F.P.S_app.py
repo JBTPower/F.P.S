@@ -830,6 +830,19 @@ with footer_col3:
     </html>
     """, height=360)
 
+# --- FOOTER ---
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+st.markdown("---")
+
+footer_col1, footer_col2, footer_col3 = st.columns([1, 1, 1])
+with footer_col1:
+    st.markdown("**🎓 Creator**<br>Team D for PESS", unsafe_allow_html=True)
+with footer_col2:
+    st.markdown("**🤝 Sponsors & Partners**<br>Prague European Summer School", unsafe_allow_html=True)
+with footer_col3:
+    st.markdown("**📚 Resources**", unsafe_allow_html=True)
+    st.page_link("pages/2_Documentation.py", label="Read the Official Guide", icon="📖")
+
 # --- SIDEBAR (AI & API OVERVIEW) ---
 with st.sidebar:
     # 1. Student Profile
