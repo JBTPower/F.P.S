@@ -493,7 +493,7 @@ with main_col:
 
 
                     # AI Sub-tabs
-                    ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "💬 Study Chat (RAG)", "📋 Material Reviewer"])
+                    ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "💬 Study Chat", "📋 Material Reviewer"])
 
                     # ----- SUMMARIZER -----
                     with ai_tabs[0]:
@@ -584,8 +584,9 @@ with footer_col1:
     📞 +420 776 367 740<br>
     🌐 [europeansummerschool.com](https://europeansummerschool.com/)
     """, unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 🛏️ Botič Student House (Accommodation)")
+    st.markdown('<div style="height: 38px;"></div>', unsafe_allow_html=True)
+    st.markdown("### 🛏️ Accommodation: Botič Student House")
+    st.markdown("K Botiči 1439, 101 00 Praha 10-Vršovice", unsafe_allow_html=True)
     components.html(
         '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2561.123!2d14.453!3d50.065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470b938c4b752945%3A0x89fc32549216bd98!2zSyBCb3RpxI1pIDE0MzkvNSwgMTAxIDAwIFByYWhhIDEwLVZyxaFvdmljZSwgQ3plY2hpYQ!5e0!3m2!1sen!2scz!4v1" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>',
         height=220
@@ -601,11 +602,11 @@ with footer_col2:
     - European Politics
     """)
     st.markdown("[🌐 View Full Prague Summer School Catalog](https://www.summerschoolsineurope.eu/destination/european-summer-school-in-prague/)", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
     st.markdown("### 🏛️ Classes: French Institute")
-    st.markdown("Štěpánská 35, 111 21 Prague 1, Czechia", unsafe_allow_html=True)
+    st.markdown("Štěpánská 644/35, 110 00 Nové Město, Czechia", unsafe_allow_html=True)
     components.html(
-        '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2560.123!2d14.423!3d50.078!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470b94eba2e66699%3A0x7d6a5c108c4a4a4b!2zRnJhbmNvdXpza8O9IGluc3RpdHV0IHYgUHJhemU!5e0!3m2!1sen!2scz!4v1" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>',
+        '<iframe src="https://maps.google.com/maps?q=French%20Institute%20in%20Prague,%20%C5%A0t%C4%9Bp%C3%A1nsk%C3%A1%2035,%20Prague&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>',
         height=220
     )
 
@@ -663,8 +664,9 @@ with footer_col3:
         snake.cells.unshift({x: snake.x, y: snake.y});
         if (snake.cells.length > snake.maxCells) snake.cells.pop();
         
-        context.fillStyle = '#ff4b4b';
-        context.fillRect(apple.x, apple.y, grid-1, grid-1);
+        context.font = (grid) + "px sans-serif";
+        context.textBaseline = "top";
+        context.fillText('☕', apple.x, apple.y);
         
         context.fillStyle = '#388E3C';
         snake.cells.forEach(function(cell, index) {
