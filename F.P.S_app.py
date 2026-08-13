@@ -1,9 +1,9 @@
 """
-F.P.S. (Felipe's Problem Solver) - Fully Integrated Dashboard
+Summer Spires Under Prague
 Includes:
 - Crash-free Class Management
 - True Folder/Subfolder Module Library (with Add/Remove Modules)
-- Felipe's Authoritative Capstone + Non-Repeating Pair/Trio Rotation Engine
+- Authoritative Capstone + Non-Repeating Pair/Trio Rotation Engine
 - AI Assistant (Summarizer, Quiz, Chat, Material Review)
 """
 
@@ -259,7 +259,6 @@ with main_col:
         """
         <div style="padding-bottom: 0.5rem;">
             <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">Summer Spires Under Prague</h1>
-            <p style="color: #4361EE; font-size: 0.95rem; font-weight: 600; margin-top: 2px;">F.P.S (Felipe's Problem Solver)</p>
         </div>
         """, 
         unsafe_allow_html=True
@@ -274,10 +273,10 @@ with main_col:
     else:
         st.markdown(f"### 📍 Workspace: **{active_class['name']}**")
         
-        tabs = st.tabs(["👥 Team Rotation Builder (Felipe's Logic)", "📁 Class Material Library (Subfolders)", "🤖 AI Assistant"])
+        tabs = st.tabs(["👥 Team Rotation Builder", "📁 Class Material Library (Subfolders)", "🤖 AI Assistant"])
 
         # ==========================================
-        # TAB 1: FELIPE'S TEAM & ROTATION BUILDER
+        # TAB 1: TEAM & ROTATION BUILDER
         # ==========================================
         with tabs[0]:
             st.markdown("#### 1. Capstone Teams & Student Roster")
@@ -314,7 +313,7 @@ with main_col:
                             for m in t_members:
                                 st.markdown(f"- {m}")
 
-                    # Step 2: Felipe's Non-Repeating Pair/Trio Generator (Days 2 to 8)
+                    # Step 2: Non-Repeating Pair/Trio Generator (Days 2 to 8)
                     st.markdown("---")
                     st.markdown("### 🔄 Daily Lab Partner Rotation (Days 2 to 8)")
                     st.caption("Guaranteed zero repeat pairings across days. Automatically forms a Trio if headcount is odd.")

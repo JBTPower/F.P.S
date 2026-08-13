@@ -13,7 +13,7 @@ from core.ai_helper import generate_team_icebreaker
 def render(storage, class_id: str):
     st.header("👥 Team Rotation Builder")
     st.write(
-        "Build Felipe's team mix for the class period. "
+        "Build the team mix for the class period. "
         "Once generated, the latest rotation is kept as the active class overview."
     )
 
