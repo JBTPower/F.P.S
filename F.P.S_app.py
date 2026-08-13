@@ -19,7 +19,20 @@ from core.ai_helper import (
     chat_with_material,
     review_material,
     generate_team_icebreaker,
+    generate_flashcards,
 )
+import requests
+from streamlit_lottie import st_lottie
+
+@st.cache_data
+def load_lottieurl(url: str):
+    try:
+        r = requests.get(url, timeout=5)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except Exception:
+        return None
 
 # --- PAGE CONFIG & MODERN CSS ---
 st.set_page_config(
@@ -69,7 +82,7 @@ if "fps_data" not in st.session_state:
                 "name": "Summerschool Course AI 3rd to 14th August",
                 "modules": ["Module 1", "Module 2", "Module 3"],
                 "files": {
-                    "Module 1": [{"name": "Day01_Syllabus.pdf", "size": "1.2 MB"}],
+                    "Module 1": [],
                     "Module 2": [],
                     "Module 3": []
                 },
@@ -452,39 +465,51 @@ with main_col:
             if not modules_with_files:
                 st.info("📂 No files with content found. Upload documents in the **Class Material Library** tab first.")
             else:
-                # Step 1: Pick a module
-                selected_module = st.selectbox(
-                    "📂 Select a module",
+                # Step 1: Pick one or more modules
+                selected_modules = st.multiselect(
+                    "📂 Select module(s)",
                     list(modules_with_files.keys()),
+                    default=[list(modules_with_files.keys())[0]] if modules_with_files else [],
                     key="ai_module_select"
                 )
 
-                # Step 2: Pick one or more files within that module
-                module_files = modules_with_files[selected_module]
-                file_names = [f["name"] for f in module_files]
-                selected_file_names = st.multiselect(
-                    "📄 Select document(s) to work with",
-                    file_names,
-                    default=[file_names[0]] if file_names else [],
-                    key="ai_file_multiselect"
-                )
-
-                if not selected_file_names:
-                    st.warning("Please select at least one file to continue.")
+                if not selected_modules:
+                    st.warning("Please select at least one module.")
                 else:
-                    # Combine text from all selected files
-                    combined_text_parts = []
-                    for fname in selected_file_names:
-                        file_obj = next(f for f in module_files if f["name"] == fname)
-                        cache_key = f"extracted_{selected_module}_{fname}"
-                        if cache_key not in st.session_state:
-                            st.session_state[cache_key] = extract_text_from_bytes(file_obj["bytes"], fname)
-                        combined_text_parts.append(f"--- {fname} ---\n{st.session_state[cache_key]}")
+                    # Step 2: Pick one or more files across those modules
+                    available_files = []
+                    for mod in selected_modules:
+                        for f in modules_with_files[mod]:
+                            available_files.append((mod, f))
+                            
+                    file_options = [f"[{mod}] {f['name']}" for mod, f in available_files]
+                    
+                    selected_file_options = st.multiselect(
+                        "📄 Select document(s) to work with",
+                        file_options,
+                        default=file_options if file_options else [],
+                        key="ai_file_multiselect"
+                    )
+    
+                    if not selected_file_options:
+                        st.warning("Please select at least one file to continue.")
+                    else:
+                        # Combine text from all selected files
+                        combined_text_parts = []
+                        for option in selected_file_options:
+                            idx = file_options.index(option)
+                            mod, file_obj = available_files[idx]
+                            fname = file_obj["name"]
+                            
+                            cache_key = f"extracted_{mod}_{fname}"
+                            if cache_key not in st.session_state:
+                                st.session_state[cache_key] = extract_text_from_bytes(file_obj["bytes"], fname)
+                            combined_text_parts.append(f"--- [{mod}] {fname} ---\\n{st.session_state[cache_key]}")
+    
+                        doc_text = "\\n\\n".join(combined_text_parts)
 
-                    doc_text = "\n\n".join(combined_text_parts)
-
-                    if len(selected_file_names) > 1:
-                        st.success(f"✅ {len(selected_file_names)} files combined for AI analysis.")
+                    if len(selected_file_options) > 1:
+                        st.success(f"✅ {len(selected_file_options)} files combined for AI analysis.")
 
                     # Show extraction preview
                     with st.expander("📄 Extracted Text Preview", expanded=False):
@@ -493,7 +518,7 @@ with main_col:
 
 
                     # AI Sub-tabs
-                    ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "💬 Study Chat", "📋 Material Reviewer"])
+                    ai_tabs = st.tabs(["📝 Summarizer", "🧠 Quiz Generator", "🗂️ Flashcards", "💬 Study Chat", "📋 Material Reviewer"])
 
                     # ----- SUMMARIZER -----
                     with ai_tabs[0]:
@@ -518,8 +543,74 @@ with main_col:
                         if "ai_quiz" in st.session_state:
                             st.markdown(st.session_state["ai_quiz"])
 
-                    # ----- STUDY CHAT -----
+                    # ----- FLASHCARDS -----
                     with ai_tabs[2]:
+                        st.markdown("##### 🗂️ Interactive Flashcards")
+                        st.caption("Generate a flashcard deck to study actively.")
+                        
+                        num_q = st.slider("Number of cards", min_value=3, max_value=15, value=5, key="fc_num_q")
+                        
+                        if st.button("🧠 Generate Deck", key="btn_flashcards", type="primary"):
+                            with st.spinner("AI is analyzing and creating flashcards..."):
+                                cards = generate_flashcards(doc_text, num_q)
+                                st.session_state["flashcards"] = cards
+                                st.session_state["fc_index"] = 0
+                                st.session_state["fc_flipped"] = False
+                                
+                        if "flashcards" in st.session_state and st.session_state["flashcards"]:
+                            cards = st.session_state["flashcards"]
+                            idx = st.session_state.get("fc_index", 0)
+                            
+                            if idx >= len(cards):
+                                st.success("🎉 You've finished the deck!")
+                                if st.button("Restart Deck", key="btn_restart_deck"):
+                                    st.session_state["fc_index"] = 0
+                                    st.session_state["fc_flipped"] = False
+                                    st.rerun()
+                            else:
+                                card = cards[idx]
+                                st.progress(idx / len(cards), text=f"Card {idx+1} of {len(cards)}")
+                                
+                                q_text = card.get('q', 'Error')
+                                a_text = card.get('a', 'Error')
+                                
+                                if not st.session_state.get("fc_flipped", False):
+                                    # Front of card (Question)
+                                    st.markdown(f"""
+                                    <div style="background: linear-gradient(135deg, #ffffff, #f9fafb); border: 2px solid #e5e7eb; border-radius: 12px; padding: 40px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-top: 0;">Question</p>
+                                        <h3 style="color: #111827; margin: 0; font-weight: 600;">{q_text}</h3>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    if st.button("🔄 Flip Card", use_container_width=True, key="btn_flip_card"):
+                                        st.session_state["fc_flipped"] = True
+                                        st.rerun()
+                                else:
+                                    # Back of card (Answer)
+                                    st.markdown(f"""
+                                    <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #bbf7d0; border-radius: 12px; padding: 40px 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                        <p style="color: #166534; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-top: 0;">Answer</p>
+                                        <h4 style="color: #14532d; margin: 0; font-weight: 500;">{a_text}</h4>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    col1, col2 = st.columns(2)
+                                    if col1.button("✅ Got it!", use_container_width=True, type="primary", key="btn_got_it"):
+                                        st.session_state["fc_index"] += 1
+                                        st.session_state["fc_flipped"] = False
+                                        if st.session_state["fc_index"] >= len(cards):
+                                            st.balloons()
+                                        st.rerun()
+                                        
+                                    if col2.button("❌ Need Review", use_container_width=True, key="btn_review_card"):
+                                        cards.append(card)
+                                        st.session_state["fc_index"] += 1
+                                        st.session_state["fc_flipped"] = False
+                                        st.rerun()
+
+                    # ----- STUDY CHAT -----
+                    with ai_tabs[3]:
                         st.markdown("##### Chat with this document")
                         st.caption("Ask questions and the AI answers based on the material.")
 
@@ -556,7 +647,7 @@ with main_col:
                                 st.rerun()
 
                     # ----- MATERIAL REVIEWER -----
-                    with ai_tabs[3]:
+                    with ai_tabs[4]:
                         st.markdown("##### Get AI feedback on this material")
                         st.caption("Professor-facing review: clarity, completeness, difficulty, and suggestions.")
                         if st.button("📋 Review Material", key="btn_review", type="primary"):
@@ -715,9 +806,24 @@ with footer_col3:
 
 # --- SIDEBAR (AI & API OVERVIEW) ---
 with st.sidebar:
-    st.markdown("## 🤖 AI Dashboard")
-    st.markdown("Monitor your OpenRouter API usage here.")
+    lottie_anim = load_lottieurl("https://lottie.host/8cd7b2f4-7e79-4560-8f92-5eb3c0423985/L1z4j8fU8B.json")
+    if lottie_anim:
+        st_lottie(lottie_anim, height=150, key="sidebar_lottie")
+        
+    # 1. Student Profile
+    user_name = st.session_state.get("username", "Student").capitalize()
+    st.markdown(f"## 👋 Welcome, {user_name}!")
+    st.markdown("*European Summer School Prague*")
+    
+    # 2. Gamification / Study Streak
+    st.markdown("### 🔥 Study Streak")
+    st.progress(75, text="3 Days Active (Goal: 4 Days)")
+    
     st.markdown("---")
+    
+    # 3. AI Dashboard
+    st.markdown("### 🤖 AI Dashboard")
+    st.caption("Monitor your OpenRouter API usage here.")
     
     api_key = st.secrets.get("OPENROUTER_API_KEY")
     if api_key:

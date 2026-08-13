@@ -4,6 +4,8 @@ Handles all OpenRouter AI API calls for F.P.S.
 Includes: Icebreaker, Document Summarizer, Quiz Generator, Study Chat, Material Reviewer.
 """
 import io
+import json
+import re
 import streamlit as st
 from openai import OpenAI
 
@@ -48,7 +50,10 @@ def _call_ai(system_prompt: str, user_prompt: str) -> str:
             st.session_state["ai_tokens"] = st.session_state.get("ai_tokens", 0) + getattr(response.usage, 'total_tokens', 0)
         return response.choices[0].message.content
     except Exception as e:
-        return f"⚠️ AI Error: {str(e)}"
+        err_str = str(e)
+        if "429" in err_str or "rate-limited" in err_str.lower() or "rate_limit" in err_str.lower():
+            return "⚠️ The free AI provider is currently rate-limited (too many people using it). Please wait a few seconds and try again!"
+        return f"⚠️ AI Error: {err_str}"
 
 
 def _call_ai_chat(messages: list) -> str:
@@ -67,7 +72,10 @@ def _call_ai_chat(messages: list) -> str:
             st.session_state["ai_tokens"] = st.session_state.get("ai_tokens", 0) + getattr(response.usage, 'total_tokens', 0)
         return response.choices[0].message.content
     except Exception as e:
-        return f"⚠️ AI Error: {str(e)}"
+        err_str = str(e)
+        if "429" in err_str or "rate-limited" in err_str.lower() or "rate_limit" in err_str.lower():
+            return "⚠️ The free AI provider is currently rate-limited (too many people using it). Please wait a few seconds and try again!"
+        return f"⚠️ AI Error: {err_str}"
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +193,41 @@ def generate_quiz(text: str, num_questions: int = 5) -> str:
             f"DOCUMENT CONTENT:\n\n{text[:15000]}"
         ),
     )
+
+
+def generate_flashcards(text: str, num_cards: int = 5) -> list:
+    """Generates flashcards as a JSON list from course material."""
+    response_text = _call_ai(
+        system_prompt=(
+            "You are a strict teaching assistant. Extract key concepts into a set of flashcards. "
+            "You must return ONLY a JSON array of objects with keys 'q' (question) and 'a' (answer). "
+            "Do NOT wrap it in markdown blockquotes. Do not include any other text."
+        ),
+        user_prompt=(
+            f"Generate exactly {num_cards} flashcards from this text. Keep questions concise and answers informative.\n\n{text[:15000]}"
+        ),
+    )
+    
+    response_text = response_text.strip()
+    
+    if "⚠️" in response_text:
+        return [{"q": "API Error", "a": response_text}]
+    
+    # Use regex to find the JSON array inside the response (handles conversational padding)
+    match = re.search(r'\[.*\]', response_text, re.DOTALL)
+    if match:
+        json_str = match.group(0)
+    else:
+        json_str = response_text
+        
+    try:
+        cards = json.loads(json_str)
+        if isinstance(cards, list):
+            return cards
+    except Exception as e:
+        return [{"q": "Error parsing flashcards", "a": f"Exception: {e}\\n\\nRaw output: {response_text}"}]
+    
+    return [{"q": "Format Error", "a": "AI did not return a valid list."}]
 
 
 # ---------------------------------------------------------------------------
