@@ -112,15 +112,54 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
 if not st.session_state["logged_in"]:
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        # --- STARTER VIDEO ON LOGIN ---
-        starter_video_path = Path("assets/starter_video.mp4")
-        if starter_video_path.exists():
-            st.video(str(starter_video_path), autoplay=True, loop=True, muted=True)
-            st.markdown("<br>", unsafe_allow_html=True)
+    # --- FULLSCREEN VIDEO BACKGROUND ---
+    import base64
+    starter_video_path = Path("assets/starter_video.mp4")
+    if starter_video_path.exists():
+        with open(starter_video_path, "rb") as f:
+            video_base64 = base64.b64encode(f.read()).decode()
             
-        st.markdown("<h3 style='text-align: center;'>🔒 Please Login</h3>", unsafe_allow_html=True)
+        st.markdown(f'''
+        <style>
+            .stApp {{
+                background-color: transparent !important;
+            }}
+            .stAppHeader {{
+                background-color: transparent !important;
+            }}
+        </style>
+        <video autoplay loop muted playsinline id="bg-video" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -999;
+            object-fit: cover;
+            opacity: 0.7;
+        ">
+          <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+        </video>
+        ''', unsafe_allow_html=True)
+
+    # --- GLASMORPHISM LOGIN FORM ---
+    st.markdown("""
+        <style>
+            div[data-testid="stForm"] {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(10px);
+                border-radius: 15px;
+                padding: 30px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #111827; margin-bottom: 20px; font-weight: 700;'>🔒 Portal Login</h2>", unsafe_allow_html=True)
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
@@ -128,6 +167,7 @@ if not st.session_state["logged_in"]:
             if submitted:
                 if username == "student1" and password == "PESS26":
                     st.session_state["logged_in"] = True
+                    st.session_state["username"] = username
                     st.rerun()
                 else:
                     st.error("Invalid username or password")
