@@ -6,7 +6,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.page_link("app.py", label="Back to Main Dashboard", icon="⬅️")
+st.page_link("F.P.S_app.py", label="Back to Main Dashboard", icon="⬅️")
 st.title("📖 Documentation & Guide")
 st.markdown("---")
 
@@ -36,4 +36,4 @@ This dashboard was created to facilitate the **Prague European Summer School**. 
 ---
 **Technical Note**: The application operates in-memory. If you wish to save your class configurations permanently, you can export them to a database in future updates. Currently, refreshing the browser (or logging out) will wipe temporary document uploads.
 """)
-st.page_link("app.py", label="Back to Main Dashboard", icon="⬅️")
+st.page_link("F.P.S_app.py", label="Back to Main Dashboard", icon="⬅️")
