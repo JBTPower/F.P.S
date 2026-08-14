@@ -1,5 +1,5 @@
 """
-Summer Spires Under Prague
+ClassSync
 Includes:
 - Crash-free Class Management
 - True Folder/Subfolder Module Library (with Add/Remove Modules)
@@ -23,7 +23,7 @@ from core.ai_helper import (
 )
 # --- PAGE CONFIG & MODERN CSS ---
 st.set_page_config(
-    page_title="Summer Spires Under Prague",
+    page_title="ClassSync",
     page_icon="🧩",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -217,7 +217,7 @@ with nav_col:
     if starter_video_path.exists():
         with st.expander("🎬 Watch Starter Video", expanded=False):
             st.video(str(starter_video_path), autoplay=False, loop=False, muted=False)
-            st.caption("Introduction to F.P.S and Summer Spires Under Prague.")
+            st.caption("Introduction to F.P.S and ClassSync.")
 
     # --- PRAGUE VIDEOS (LOGGED IN) ---
     anthem_path = Path("assets/Summer_Under_Prague_Spires.mp4")
@@ -258,7 +258,7 @@ with main_col:
     st.markdown(
         """
         <div style="padding-bottom: 0.5rem;">
-            <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">Summer Spires Under Prague</h1>
+            <h1 style="color: #212529; font-size: 2.2rem; font-weight: 800; margin-bottom: 0;">ClassSync</h1>
         </div>
         """, 
         unsafe_allow_html=True

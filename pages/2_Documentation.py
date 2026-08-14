@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Documentation | Summer Spires Under Prague",
+    page_title="Documentation | ClassSync",
     page_icon="📖",
     layout="wide",
 )
@@ -11,7 +11,7 @@ st.title("📖 Documentation & Guide")
 st.markdown("---")
 
 st.markdown("""
-### Welcome to Summer Spires Under Prague
+### Welcome to ClassSync
 This dashboard was created to facilitate the **Prague European Summer School**. It serves as an integrated workspace combining class material management, team building, and artificial intelligence integration.
 
 #### 1. 👥 Team Rotation Builder
